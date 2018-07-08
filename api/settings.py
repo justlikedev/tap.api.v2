@@ -14,7 +14,8 @@ DEBUG = True
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    '0.0.0.0'
+    '0.0.0.0',
+    'tap-api-v2.herokuapp.com'  # server on heroku
 ]
 
 INSTALLED_APPS = [
@@ -72,8 +73,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'api.wsgi.application'
 
+# in local change default database to pglocal
 DATABASES = {
     'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'dfqg6peqbfobm1',
+        'USER': 'tgtgfpeubhvzyh',
+        'PASSWORD': '8618588bea0d96336b8cd347f7e2bbdfd7c29265ae7827b4a9d83b11dad881f1',
+        'HOST': 'ec2-54-227-243-210.compute-1.amazonaws.com',
+        'PORT': '5432',
+    },
+    'pglocal': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'tap_db',
         'USER': 'admin',

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Cupom de Reserva</title>
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,400i,700,700i" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Lato', 'helvetica neue', helvetica, arial, sans-serif;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            color: #6e7a89;
+        }
+
+        .content {
+            width: 700px;
+        }
+
+        .card {
+            width: 500px;
+            border: 1px solid #000;
+        }
+
+        .informations {
+            padding: 20px;
+        }
+
+        .row {
+            border: 0px;
+            padding: 0px;
+        }
+
+        .caption {
+            text-transform: uppercase;
+        }
+
+        .bolder {
+            font-weight: bolder;
+        }
+
+        .title {
+            padding: 0px;
+            margin: 0px;
+            font-weight: normal;
+        }
+
+        .fleft {
+            float: left;
+        }
+
+        .fright {
+            float: right;
+        }
+
+        .cutted {
+            width: 96px;
+            border-left-style: dotted;
+            border-left-color: #000;
+            min-height: 240px;
+        }
+
+        .card.block {
+            margin-bottom: 20px;
+        }
+
+        .block {
+            display: block;
+        }
+
+        .clearfix {
+            clear: both;
+        }
+
+        .inline {
+            display: inline-block;
+        }
+
+        .box-small {
+            width: 32%;
+        }
+
+        .block.bg-red {
+            margin: 20px -20px;
+            padding: 20px;
+            border-right: 3px solid #ad2231;
+            max-width: 358px;
+        }
+
+        .bg-red {
+            background-color: #ad2231;
+        }
+
+        .event {
+            letter-spacing: 1px;
+            word-spacing: 10px;
+            font-weight: 900;
+            font-size: 20px;
+            color: #fff;
+        }
+
+        .vertical {
+            display: inline-block;
+        }
+
+        .vertical.box-small {
+            width: 15% !important;
+        }
+
+        .vertical>.block>.box-small {
+            width: 55%;
+            margin: 20px;
+        }
+
+        .brand img {
+            width: 40%;
+        }
+
+        .box-medium {
+            width: 45%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content">
+        {% for seat in seats %}
+        <div class="card block">
+            <div class="informations fleft">
+                <div class="block">
+                    <div class="box-medium inline">
+                        <h5 class="caption title">aluno</h5>
+                        <span class="caption bolder">{{ alumn_name }}</span>
+                    </div>
+                    <div class="box-medium inline">
+                        <span class="caption bolder fright">{{ code }}</span>
+                    </div>
+                </div>
+                <div class="block bg-red">
+                    <p class="caption title bolder event">{{ event_title }}</p>
+                </div>
+                <div class="block">
+                    <div class="box-small inline">
+                        <h6 class="caption title">data</h6>
+                        <span class="caption bolder">{{ event_date }}</span>
+                    </div>
+                    <div class="box-small inline">
+                        <h6 class="caption title">horário</h6>
+                        <span class="caption bolder">{{ event_hour }}</span>
+                    </div>
+                    <div class="box-small inline">
+                        <h6 class="caption title">assento</h6>
+                        <span class="caption bolder">{{ seat }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="cutted fright">
+                <div class="vertical">
+                    <div class="block">
+                        <div class="box-small inline">
+                            <h6 class="caption title">data</h6>
+                            <span class="caption bolder">{{ event_date }}</span>
+                        </div>
+                        <div class="box-small inline">
+                            <h6 class="caption title">horário</h6>
+                            <span class="caption bolder">{{ event_hour }}</span>
+                        </div>
+                        <div class="box-small inline">
+                            <h6 class="caption title">assento</h6>
+                            <span class="caption bolder">{{ seat }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+        {% endfor %}
+
+    </div>
+</body>
+
+</html>

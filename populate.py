@@ -14,7 +14,7 @@ from datetime import datetime
 import pytz
 from dateutil.relativedelta import relativedelta
 
-from core.models import Event, Reserv, Seat, Token, User
+from core.models import Event, Reserve, Seat, Token, User
 
 TZ = pytz.timezone('America/Sao_Paulo')
 
@@ -70,7 +70,7 @@ def populate():
     Token.objects.all().delete()
     Event.objects.all().delete()
     Seat.objects.all().delete()
-    Reserv.objects.all().delete()
+    Reserve.objects.all().delete()
 
     # create tokens
     print('creating some tokens')
@@ -106,17 +106,17 @@ def populate():
     # create reservations
     print('creating some reservations')
 
-    reserv = Reserv.objects.create(alumn=mario, event=event_1)
-    reserv.seats.add(Seat.objects.filter(row='A', column='9', type='0').get())
-    reserv.seats.add(Seat.objects.filter(row='A', column='11', type='0').get())
-    reserv.seats.add(Seat.objects.filter(row='A', column='13', type='0').get())
-    reserv.save()
+    reserve = Reserve.objects.create(alumn=mario, event=event_1)
+    reserve.seats.add(Seat.objects.filter(row='A', column='9', type='0').get())
+    reserve.seats.add(Seat.objects.filter(row='A', column='11', type='0').get())
+    reserve.seats.add(Seat.objects.filter(row='A', column='13', type='0').get())
+    reserve.save()
 
-    reserv = Reserv.objects.create(alumn=luigi, event=event_2)
-    reserv.seats.add(Seat.objects.filter(row='F', column='18', type='1').get())
-    reserv.seats.add(Seat.objects.filter(row='F', column='16', type='1').get())
-    reserv.seats.add(Seat.objects.filter(row='F', column='14', type='1').get())
-    reserv.save()
+    reserve = Reserve.objects.create(alumn=luigi, event=event_2)
+    reserve.seats.add(Seat.objects.filter(row='F', column='18', type='1').get())
+    reserve.seats.add(Seat.objects.filter(row='F', column='16', type='1').get())
+    reserve.seats.add(Seat.objects.filter(row='F', column='14', type='1').get())
+    reserve.save()
 
 if __name__ == "__main__":
     populate()

@@ -3,7 +3,7 @@
 
 from rest_framework import serializers
 
-from core.models import User, Token, Event, Seat, Reserv
+from core.models import User, Token, Event, Seat, Reserve
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -58,12 +58,12 @@ class SeatSerializer(serializers.HyperlinkedModelSerializer):
         depth = 1
 
 
-class ReservSerializer(serializers.HyperlinkedModelSerializer):
+class ReserveSerializer(serializers.HyperlinkedModelSerializer):
     alumn = serializers.HyperlinkedRelatedField(required=False, allow_null=True, queryset=User.objects.all(), view_name='user-detail')
     event = serializers.HyperlinkedRelatedField(required=False, allow_null=True, queryset=Event.objects.all(), view_name='event-detail')
     seats = serializers.HyperlinkedRelatedField(many=True, queryset=Seat.objects.all(), view_name='seat-detail')
 
     class Meta:
-        model = Reserv
+        model = Reserve
         fields = ('url', 'alumn', 'event', 'seats')
         depth = 2

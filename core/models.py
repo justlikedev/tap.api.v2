@@ -106,7 +106,7 @@ class Seat(models.Model):
 
     @property
     def is_reserved(self):
-        return Reserv.objects.filter(seats__id=self.id).exists()
+        return Reserve.objects.filter(seats__id=self.id).exists()
 
     @property
     def type_name(self):
@@ -120,7 +120,7 @@ class Seat(models.Model):
         return 'Seat: {0} - {1}'.format(self.row, self.column)
 
 
-class Reserv(models.Model):
+class Reserve(models.Model):
     alumn = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     event = models.ForeignKey(Event, null=True, on_delete=models.SET_NULL)
     seats = models.ManyToManyField(Seat)
@@ -133,13 +133,13 @@ class Reserv(models.Model):
     objects = models.Manager()
 
     class Meta:
-        verbose_name = 'Reserv'
-        verbose_name_plural = 'Reservs'
+        verbose_name = 'Reserve'
+        verbose_name_plural = 'Reserves'
 
     def __unicode__(self):
-        return 'Reserv: {0} reserved for: {1}'.format(self.event, self.alumn)
+        return 'Reserve: {0} reserved for: {1}'.format(self.event, self.alumn)
 
     def save(self, *args, **kwargs):
         # refresh the field update_at
         self.updated_at = timezone.localtime(timezone.now(), timezone=TZ)
-        super(Reserv, self).save(*args, **kwargs)
+        super(Reserve, self).save(*args, **kwargs)

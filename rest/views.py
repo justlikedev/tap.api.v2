@@ -14,23 +14,37 @@ from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 
 from core.controllers import render, render_to_pdf, send_mail
-from core.models import Event, Reserv, Seat, Token, User
-from rest.serializers import (EventSerializer, ReservSerializer,
+from core.models import Event, Reserve, Seat, Token, User
+from rest.serializers import (EventSerializer, ReserveSerializer,
                               SeatSerializer, TokenSerializer, UserSerializer)
 
 TZ = pytz.timezone('America/Sao_Paulo')
 locale.setlocale(locale.LC_TIME, 'pt_BR.utf8')
 
 class UserViewSet(viewsets.ModelViewSet):
+    """
+    API view set to handle users.
+
+    Examples:
+
+        GET /api/users/ - show all users
+    """
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    # permission_classes = (rf_permissions.IsAuthenticated, rf_permissions.IsAdminUser)
+    permission_classes = (rf_permissions.IsAuthenticated, rf_permissions.IsAdminUser)
 
 
 class TokenViewSet(viewsets.ModelViewSet):
+    """
+    API view set to handle tokens.
+
+    Examples:
+
+        GET /api/tokens/ - show all tokens
+    """
     queryset = Token.objects.all()
     serializer_class = TokenSerializer
-    # permission_classes = (rf_permissions.IsAuthenticated, rf_permissions.IsAdminUser)
+    permission_classes = (rf_permissions.IsAuthenticated, rf_permissions.IsAdminUser)
 
 
 class EventViewSet(viewsets.ModelViewSet):
@@ -39,19 +53,19 @@ class EventViewSet(viewsets.ModelViewSet):
 
     Examples:
 
-        /rest/events/ - show all events
+        GET  /api/events/         - show all events
 
     Extra actions:
 
-        POST /rest/events/1/clone - clone an event for other date
+        POST /api/events/id/clone - clone an event for other date
     """
 
 
     queryset = Event.objects.all()
     serializer_class = EventSerializer
-    # permission_classes = (rf_permissions.IsAuthenticatedOrReadOnly, )
+    permission_classes = (rf_permissions.IsAuthenticatedOrReadOnly, )
 
-    @detail_route(methods=['post', 'get'], url_path='clone')
+    @detail_route(methods=['post', 'get'], permission_classes=[rf_permissions.IsAuthenticated, rf_permissions.IsAdminUser], url_path='clone')
     def clone(self, request, pk):
         """
         Clone an event for other date
@@ -78,23 +92,46 @@ class EventViewSet(viewsets.ModelViewSet):
 
 
 class SeatViewSet(viewsets.ModelViewSet):
+    """
+    API view set to handle seats.
+
+    Examples:
+
+        GET /api/seats/ - show all seats
+    """
     queryset = Seat.objects.all()
     serializer_class = SeatSerializer
-    # permission_classes = (rf_permissions.IsAuthenticatedOrReadOnly, )
+    permission_classes = (rf_permissions.IsAuthenticatedOrReadOnly, )
 
 
-class ReservViewSet(viewsets.ModelViewSet):
-    queryset = Reserv.objects.all()
-    serializer_class = ReservSerializer
-    # permission_classes = (rf_permissions.IsAuthenticatedOrReadOnly, )
+class ReserveViewSet(viewsets.ModelViewSet):
+    """
+    API view set to handle reservations.
+
+    Examples:
+
+        GET  /api/reservations/                       - show all reservations
+
+    Extra actions:
+
+        POST /api/reservations/add-seat               - add seats to reserve
+        POST /api/reservations/id/cancel              - cancel a reserve
+        POST /api/reservations/id/finish              - finish a reserve
+        POST /api/reservations/id/paid                - confirm a reserve was paid
+        POST /api/reservations/id/send-confirmation   - send a reserve confirmation
+        GET  /api/reservations/id/view-confirmation   - view a reserve confirmation
+    """
+    queryset = Reserve.objects.all()
+    serializer_class = ReserveSerializer
+    permission_classes = (rf_permissions.IsAuthenticatedOrReadOnly, )
 
     @staticmethod
-    def check_available_tickets(reserv, max_tickets):
+    def check_available_tickets(reserve, max_tickets):
         """
         check if has available tickets for this alumn
         """
 
-        tickets = reserv.seats.count()
+        tickets = reserve.seats.count()
         check = tickets < max_tickets
 
         if check:
@@ -104,13 +141,13 @@ class ReservViewSet(viewsets.ModelViewSet):
         return check, 0
 
     @staticmethod
-    def is_session_valid(reserv):
-        limit = reserv.updated_at.minute + (int(reserv.session.total_seconds() / 60) % 60)
+    def is_session_valid(reserve):
+        limit = reserve.updated_at.minute + (int(reserve.session.total_seconds() / 60) % 60)
         now = timezone.localtime(timezone.now(), timezone=TZ).minute
 
-        # if limit is not greater than now, the reserv should be deleted and seats released
+        # if limit is not greater than now, the reserve should be deleted and seats released
         if limit < now:
-            reserv.delete()
+            reserve.delete()
             raise ValidationError('Sua sessão expirou e sua reserva não foi finalizada. Escolha novos assentos para continuar.')
 
         # if limit is greater than now the session is available
@@ -122,10 +159,31 @@ class ReservViewSet(viewsets.ModelViewSet):
         code.update(str(datetime.now()))
         return code.hexdigest()[:10].upper()
 
-    @list_route(methods=['post', 'get'], url_path='add-seat')
+    @staticmethod
+    def get_confirmation_context(pk):
+        try:
+            reserve = Reserve.objects.get(pk=pk)
+        except Reserve.DoesNotExist:
+            raise NotFound('Reserva não encontrada')
+
+        seats = []
+        for seat in reserve.seats.all():
+            seats.append(seat.slug)
+
+        return {
+            'alumn_name': reserve.alumn.get_full_name,
+            'alumn_email': reserve.alumn.email,
+            'event_title': reserve.event.title,
+            'event_date': reserve.event.slug_date,
+            'event_hour': reserve.event.slug_hour,
+            'seats': seats,
+            'code': reserve.code
+        }
+
+    @list_route(methods=['post', 'get'], permission_classes=[rf_permissions.IsAuthenticated], url_path='add-seat')
     def add_seat(self, request):
         """
-        create reserve or add seats to exist reserv
+        create reserve or add seats to exist reserve
         """
 
         # TODO is only for tests using browsable api and should be removed before send to production
@@ -146,20 +204,20 @@ class ReservViewSet(viewsets.ModelViewSet):
         except Seat.DoesNotExist:
             raise NotFound('Assento não encontrado.')
 
-        reserv = Reserv.objects.filter(event_id=event_id, alumn=alumn)
-        if reserv.exists():  # add seat to reserve
-            reserv = reserv.get()
-            self.is_session_valid(reserv)
-            available = self.check_available_tickets(reserv, event.max_tickets)
+        reserve = Reserve.objects.filter(event_id=event_id, alumn=alumn)
+        if reserve.exists():  # add seat to reserve
+            reserve = reserve.get()
+            self.is_session_valid(reserve)
+            available = self.check_available_tickets(reserve, event.max_tickets)
             if available[0]:
-                reserv.seats.add(seat)
-                reserv.save()
+                reserve.seats.add(seat)
+                reserve.save()
             else:
                 return Response(data={'error': 'Você selecionou o máximo de assentos disponíveis ({0}) para sua reserva.'.format(event.max_tickets),
                                       'info': 'Você deve finalizar sua reserva para confirmá-la e garantir seus assentos ou desmarcar um dos assentos selecionados.'},
                                 status=status.HTTP_300_MULTIPLE_CHOICES)
-        else:  # create the reserv
-            created = Reserv.objects.create(alumn=alumn, event=event)
+        else:  # create the reserve
+            created = Reserve.objects.create(alumn=alumn, event=event)
             created.seats.add(seat)
             created.save()
 
@@ -168,7 +226,7 @@ class ReservViewSet(viewsets.ModelViewSet):
                               'available_tickets': available[1] - 1},
                         status=status.HTTP_200_OK)
 
-    @detail_route(methods=['post', 'get'], url_path='cancel')
+    @detail_route(methods=['post', 'get'], permission_classes=[rf_permissions.IsAuthenticated, rf_permissions.IsAdminUser], url_path='cancel')
     def cancel(self, request, pk):
         """
         cancel reserve and release the seats
@@ -184,17 +242,16 @@ class ReservViewSet(viewsets.ModelViewSet):
             raise ValidationError('Parâmetro \'cancel\' não informado.')
 
         try:
-            Reserv.objects.filter(pk=pk).delete()
-        except Reserv.DoesNotExist: 
+            Reserve.objects.filter(pk=pk).delete()
+        except Reserve.DoesNotExist: 
             raise NotFound('Reserva não encontrada')
 
         return Response(data={'success': 'Reserva foi cancelada com sucesso.'}, status=status.HTTP_200_OK)
 
-
-    @detail_route(methods=['post', 'get'], url_path='finish')
+    @detail_route(methods=['post', 'get'], permission_classes=[rf_permissions.IsAuthenticated, rf_permissions.IsAdminUser], url_path='finish')
     def finish(self, request, pk):
         """
-        finish the reserv
+        finish the reserve
         """
 
         # TODO is only for tests using browsable api and should be removed before send to production
@@ -207,19 +264,19 @@ class ReservViewSet(viewsets.ModelViewSet):
             raise ValidationError('Parâmetro \'finished\' não informado.')
 
         try:
-            reserv = Reserv.objects.get(pk=pk)
-        except Reserv.DoesNotExist: 
+            reserve = Reserve.objects.get(pk=pk)
+        except Reserve.DoesNotExist: 
             raise NotFound('Reserva não encontrada')
 
-        reserv.finished = True
-        reserv.code = self.create_hash()
-        reserv.save()
+        reserve.finished = True
+        reserve.code = self.create_hash()
+        reserve.save()
 
         return Response(data={'success': 'Solicitação de reserva concluída.',
                               'info': 'Após a confirmação do pagamento você poderá imprimir seu comprovante de reserva.'}, 
                         status=status.HTTP_200_OK)
 
-    @detail_route(methods=['post', 'get'], url_path='paid')
+    @detail_route(methods=['post', 'get'], permission_classes=[rf_permissions.IsAuthenticated, rf_permissions.IsAdminUser], url_path='paid')
     def paid(self, request, pk):
         """
         confirm payment received
@@ -235,41 +292,21 @@ class ReservViewSet(viewsets.ModelViewSet):
             raise ValidationError('Parâmetro \'paid\' não informado.')
 
         try:
-            reserv = Reserv.objects.get(pk=pk)
-        except Reserv.DoesNotExist:
+            reserve = Reserve.objects.get(pk=pk)
+        except Reserve.DoesNotExist:
             raise NotFound('Reserva não encontrada')
 
-        reserv.paid = True
+        reserve.paid = True
+        reserve.save()
 
         return Response(data={'success': 'Pagamento confirmado.'}, status=status.HTTP_200_OK)
 
-    @staticmethod
-    def get_confirmation_context(pk):
-        try:
-            reserv = Reserv.objects.get(pk=pk)
-        except Reserv.DoesNotExist:
-            raise NotFound('Reserva não encontrada')
-
-        seats = []
-        for seat in reserv.seats.all():
-            seats.append(seat.slug)
-
-        return {
-            'alumn_name': reserv.alumn.get_full_name,
-            'alumn_email': reserv.alumn.email,
-            'event_title': reserv.event.title,
-            'event_date': reserv.event.slug_date,
-            'event_hour': reserv.event.slug_hour,
-            'seats': seats,
-            'code': reserv.code
-        }
-
-    @detail_route(methods=['get'], url_path='confirmation')
+    @detail_route(methods=['get'], permission_classes=[rf_permissions.IsAuthenticated, rf_permissions.IsAdminUser], url_path='view-confirmation')
     def get_confirmation(self, request, pk):
         context = self.get_confirmation_context(pk)
         return render_to_pdf('booking-confirmation.html', context)
 
-    @detail_route(methods=['get'], url_path='send-confirmation')
+    @detail_route(methods=['get'], permission_classes=[rf_permissions.IsAuthenticated, rf_permissions.IsAdminUser], url_path='send-confirmation')
     def send_confirmation_mail(self, request, pk):
         context = self.get_confirmation_context(pk)
         error = send_mail(template_src='emails/booking-confirmation.html', context=context, 

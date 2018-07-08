@@ -26,6 +26,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    # 'rest_framework.authtoken',
+    # 'rest_auth',
     'core',
     'rest'
 ]
@@ -37,7 +39,7 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
     'DEFAULT_FILTER_BACKENDS': ('rest_framework_filters.backends.DjangoFilterBackend',),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
@@ -73,9 +75,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'api.wsgi.application'
 
-# in local change default database to pglocal
+# in local change default database to pg_local
 DATABASES = {
-    'default': {
+    'pg_production': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'dfqg6peqbfobm1',
         'USER': 'tgtgfpeubhvzyh',
@@ -83,7 +85,7 @@ DATABASES = {
         'HOST': 'ec2-54-227-243-210.compute-1.amazonaws.com',
         'PORT': '5432',
     },
-    'pglocal': {
+    'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'tap_db',
         'USER': 'admin',

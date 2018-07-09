@@ -6,12 +6,12 @@ from datetime import datetime, timedelta
 
 import pytz
 
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.utils import timezone
 
-from core.managers import UserManager
+from core.managers import UserManager as CustomUserManager
 
 TZ = pytz.timezone('America/Sao_Paulo')
 

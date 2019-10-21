@@ -12,7 +12,7 @@ django-polymorphic==2.0.2
 django-quiet-runserver==0.2.0
 django-storages==1.6.6
 django-url-filter==0.3.5
-djangorestframework==3.8.2
+djangorestframework==3.9.1
 djangorestframework-filters==0.10.2
 djangorestframework-gis==0.13
 djangorestframework-queryfields==1.0.0

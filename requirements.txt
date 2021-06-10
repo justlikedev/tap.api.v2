@@ -4,7 +4,7 @@ botocore==1.10.52
 cached-property==1.4.3
 certifi==2018.4.16
 chardet==3.0.4
-Django==2.0.7
+Django==2.2.24
 django-choices-enum==0.2
 django-cors-headers==2.3.0
 django-filter==1.1.0
